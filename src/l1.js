@@ -1,74 +1,41 @@
 import React, { useState, useEffect } from 'react';
 
-const RealTimeLocation = () => {
+const App = () => {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
-  const [locationFetched, setLocationFetched] = useState(false); // New state to track if location is fetched
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by this browser.');
-      return;
+    // Request geolocation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setError(null); // Clear previous errors
+        },
+        (err) => {
+          setError(`Error: ${err.message}`);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setError("Geolocation is not supported by your browser.");
     }
-
-    const updateLocation = (position) => {
-      console.log("Location updated:", position.coords);
-      setLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
-      setLocationFetched(true); // Mark location as fetched
-      setError(null); // Clear any previous error
-    };
-
-    const handleError = (error) => {
-      if (!locationFetched) { // Only set error if location hasn't been fetched yet
-        console.error("Error fetching location:", error);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setError('Permission denied. Please enable location access.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setError('Position unavailable.');
-            break;
-          case error.TIMEOUT:
-            setError('Location request timed out.');
-            break;
-          default:
-            setError(`An unknown error occurred: ${error.message}`);
-            break;
-        }
-      }
-    };
-
-    const watchId = navigator.geolocation.watchPosition(
-      updateLocation,
-      handleError,
-      {
-        enableHighAccuracy: true,
-        timeout: 20000, // Longer timeout for continuous tracking
-        maximumAge: 10000, // Use cached data up to 10 seconds old
-      }
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [locationFetched]);
+  }, []);
 
   return (
     <div>
-      <h1>Real-Time GPS Tracking</h1>
-      {error ? (
-        <p>Error: {error}</p>
-      ) : location ? (
-        <div>
-          <p>Latitude: {location.latitude}</p>
-          <p>Longitude: {location.longitude}</p>
-        </div>
+      <h1>Geolocation App</h1>
+      {error && <p>{error}</p>}
+      {location ? (
+        <p>Latitude: {location.latitude}, Longitude: {location.longitude}</p>
       ) : (
-        <p>Fetching location data...</p>
+        <p>Requesting location access...</p>
       )}
     </div>
   );
 };
 
-export default RealTimeLocation;
+export default App;
